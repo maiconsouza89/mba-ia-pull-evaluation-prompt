@@ -59,9 +59,7 @@ def pull_prompts_from_langsmith():
             user_prompt = msg.prompt.template
 
     meta = prompt.metadata or {}
-
-    print(meta)
-    print(info)
+    
     return {
         PROMPT_KEY: {
             "description": getattr(info, "description", None),
