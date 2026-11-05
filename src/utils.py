@@ -142,7 +142,8 @@ def validate_prompt_structure(prompt_data: Dict[str, Any]) -> tuple[bool, list]:
 
     techniques = prompt_data.get('techniques_applied', [])
     if len(techniques) < 2:
-        errors.append(f"Mínimo de 2 técnicas requeridas, encontradas: {len(techniques)}")
+        errors.append(
+            f"Mínimo de 2 técnicas requeridas, encontradas: {len(techniques)}")
 
     return (len(errors) == 0, errors)
 
@@ -228,7 +229,21 @@ def get_llm(model: Optional[str] = None, temperature: float = 0.0):
         return ChatGoogleGenerativeAI(
             model=model_name,
             temperature=temperature,
-            google_api_key=api_key
+            google_api_key=api_key,
+        )
+    elif provider == 'anthropic':
+        from langchain_anthropic import ChatAnthropic
+
+        api_key = os.getenv('ANTHROPIC_API_KEY')
+        if not api_key:
+            raise ValueError(
+                "ANTHROPIC_API_KEY não configurada no .env\n"
+                "Obtenha uma chave em: https://console.anthropic.com/account/api-keys"
+            )
+
+        return ChatAnthropic(
+            model=model_name,
+            anthropic_api_key=api_key
         )
 
     else:
