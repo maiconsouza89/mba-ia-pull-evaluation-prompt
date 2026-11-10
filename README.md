@@ -354,51 +354,30 @@ Rode uma vez e guarde o endereço: ao compartilhar de novo, o link muda.
 - Documente seu processo - a jornada de otimização é tão importante quanto o resultado final
 ---
 
+# Entrega do desafio
+
+Prompt otimizado: [`prompts/bug_to_user_story_v2.yml`](prompts/bug_to_user_story_v2.yml). Resultado: ✅ **aprovado**, todas as métricas ≥ 0.8.
+
 ## Técnicas Aplicadas (Fase 2)
 
-O prompt otimizado está em [`prompts/bug_to_user_story_v2.yml`](prompts/bug_to_user_story_v2.yml). A v1 tinha uma única instrução genérica ("crie uma user story") e repetia `{bug_report}` no system e no user prompt. Na v2, o **system prompt** guarda papel, processo, formato, regras, edge cases e exemplos. O **user prompt** guarda só o relato, entre tags `<bug_report>`.
+Few-shot Learning, Role Prompting, Skeleton of Thought e Chain of Thought, mais um checklist por tipo de bug.
+Justificativas e exemplos: [docs/tecnicas-aplicadas.md](docs/tecnicas-aplicadas.md).
 
-O dataset tem bugs de 3 níveis (5 simples, 7 médios, 3 complexos), e a resposta esperada cresce com a complexidade. Por isso as técnicas foram escolhidas para fazer o modelo acertar o formato certo para cada nível, sem inventar informação.
+## Resultados Finais
 
-| Técnica | Obrigatória? | Por que foi escolhida |
-|---|---|---|
-| Few-shot Learning | Sim | Ensina o formato por demonstração, que é mais confiável do que descrevê-lo. |
-| Role Prompting | Opcional | Fixa a persona e o tom que as métricas esperam. |
-| Skeleton of Thought | Opcional | Dá um esqueleto de saída para cada nível de complexidade. |
-| Chain of Thought | Opcional | Faz o modelo analisar o relato antes de escrever. |
+| Helpfulness | Correctness | F1-Score | Clarity | Precision | Média |
+|---|---|---|---|---|---|
+| 0.86 | 0.87 | 0.87 | 0.87 | 0.86 | **0.87** |
 
-### 1. Few-shot Learning
+![Experimento no LangSmith com as 5 métricas acima de 0.8](docs/print/langsmith-result.png)
 
-Há 3 exemplos completos de entrada e saída, um por nível de complexidade:
+- Dataset e experimentos (público): <https://smith.langchain.com/public/468d13c6-7e77-41e0-af63-8dec037ca755/d>
+- Prompt no Hub (público): <https://smith.langchain.com/hub/mass/bug_to_user_story_v2>
 
-- **Simples:** história + critérios Dado/Quando/Então.
-- **Médio:** inclui também Critérios Técnicos e Contexto Técnico preservando endpoint, log e números.
-- **Complexo:** seções `===`, blocos A/B/C por problema, contexto do bug e tasks.
+Comparação v1 x v2 e iterações: [docs/resultados-finais.md](docs/resultados-finais.md).
 
-Os exemplos usam bugs **novos** (botão no Firefox, PDF de nota fiscal, agendamento de clínica) e não os do dataset, para a avaliação não medir memorização.
+## Como Executar
 
-### 2. Role Prompting
+Pré-requisitos, configuração e comandos de cada fase: [docs/como-executar.md](docs/como-executar.md).
 
-O prompt define "Product Manager sênior com forte base técnica, 10+ anos em times ágeis". Isso empurra o modelo para o tom profissional e empático, para o foco em valor de negócio e para a persona específica ("cliente usando Safari" em vez de "usuário").
-
-### 3. Skeleton of Thought
-
-A seção `FORMATO DE SAÍDA` traz um esqueleto por complexidade (SIMPLES, MÉDIO, COMPLEXO). Isso evita dois erros: bug simples com excesso de seções (cai a Precision) e bug complexo sem contexto, critérios técnicos ou tasks (cai o Recall e o F1).
-
-### 4. Chain of Thought (interno)
-
-A seção `PROCESSO` pede 4 passos: extrair fatos, definir persona e comportamento correto, classificar a complexidade e escrever a saída conferindo cobertura e fidelidade. O modelo é instruído a **não exibir** esse raciocínio, para que o texto avaliado seja só a User Story.
-
-### Requisitos do desafio atendidos
-
-| Requisito | Onde está no prompt |
-|---|---|
-| Instruções claras e específicas | `OBJETIVO`, `PROCESSO` e `FORMATO DE SAÍDA` |
-| Regras explícitas de comportamento | `REGRAS` (7 regras: formato, fidelidade, cobertura e tom) |
-| Few-shot | `EXEMPLOS`, 3 exemplos |
-| Edge cases | `EDGE CASES`: relato vago, texto sem bug, múltiplos problemas, causa já apontada, dado sensível e prompt injection. |
-| System vs User Prompt | O system guarda as regras e exemplos fixos. O user guarda só a entrada variável. |
-
-### Resultados da avaliação
-
-_A preencher após `python src/push_prompts.py` e `python src/evaluate.py`._
+Além de OpenAI e Google, o projeto passou a suportar o provider **Anthropic** (`LLM_PROVIDER=anthropic`), usado nesta entrega com `claude-haiku-5-5` gerando as respostas e `claude-sonnet-5-5` avaliando.
